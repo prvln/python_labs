@@ -20,7 +20,7 @@ class BST:
 
         elif value == self.data:
 
-            print(f'Такой узел уже существует {value}')
+            raise ValueError(f'Такой узел уже существует {value}')
         elif value>self.data:
             
             if self.right is None:
