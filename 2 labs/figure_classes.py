@@ -1,9 +1,9 @@
 import math
-# use abstact method ABC
+from abc import ABC, abstractmethod
 
-class BasicFigure:
-    name : str = "Basic Figure"
-
+class BasicFigure(ABC):
+    
+    @abstractmethod
     def square(self):
         pass
 
