@@ -1,7 +1,7 @@
 from math import factorial
 from decimal import *
 from time import time
-from MyLogger import *
+from logger import *
 
 class AlterBehavior(type):
 
@@ -18,67 +18,46 @@ class DecoratorForVeryLongFunction:
      
     def __call__(self, *args):
         self.logger.config()
-        start_time = time()
 
-        result = self.function(args[0][0])
-
-        finish_time = time()
-        work_time = finish_time - start_time
+        work_data = self.calc_work_time(*args)
+        self.work_data = work_data
+        work_time = work_data[-1]
 
         print(str(work_time) + " seconds")
         self.logger.INFO(str("function {} called with arguments {} \n".format(
             self.function, args
         )))
-        
-        if self.status == True:
-            return (finish_time,result)
-        else:
-            return result
 
-class HTMLDecorator:
+        result = work_data[0:-1]
+        return result
+
+    def calc_work_time(self, *args):
+        start_time = time()
+
+        result = self.function(*args)
+
+        finish_time = time()
+
+        work_time = finish_time - start_time
+
+        return [result, work_time]
+
+class HTMLDecorator(DecoratorForVeryLongFunction):
     def __init__(self, function):
         self.function = function
         self.logger = MyLogger()
      
     def __call__(self, *args):
+        work_data = super().__call__(*args)
+        work_time = work_data[-1]
+
+        with open("HTML_decorator.html","a") as file:
+            message = "<html><body>{}</html></body>".format(str(work_time))
+            file.write(message)
         
-        self.logger.config()
-
-        if isinstance(self.function, DecoratorForVeryLongFunction):
-            # result = self.function(*args,**kwargs)
-            result = self.function.__call__(args, AlterBehavior.__call__())
-
-            with open("HTML_decorator.html","a") as file:
-                message = "<html><body>{}</html></body>".format(result)
-                file.write(message)
-            
-            self.logger.INFO(str("{}: function {} called with arguments {} \n".format(
-                localtime(int(result)),
-                args[0], args[1:]
-            )))
-
-            # return all function results
-            return result
-            
-        else:
-            
-            start_time = time()
-            result = self.function(*args)
-
-            finish_time = time()
-            work_time = finish_time - start_time
-
-            with open("HTML_decorator.html","a") as file:
-                message = "<html><body>{}</html></body>".format(str(finish_time))
-                file.write(message)
-
-            print(str(work_time) + " seconds")
-            self.logger.INFO(str("{}: function {} called with arguments {} \n".format(
-                localtime(finish_time),
-                args[0],
-                args[1:]
-            )))
-            return result
+        result = self.work_data[0:-1]
+        return result
+        
 
 
 @HTMLDecorator
