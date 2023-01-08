@@ -29,7 +29,7 @@ class MyLogger:
 
     
     def baseLogMessage(self, type, message):
-        if self.file == None:
+        if self.file is None:
             return
         
         preparedString = "[{}] {} : {} \n".format(type, asctime(localtime(time())), message)
@@ -51,8 +51,10 @@ class MyLogger:
         self.baseLogMessage("CRITICAL", message)
     
     def __del__(self):
-        if self.file == None:
+        if self.file is None:
             return
+            
+        self.file.close()
 
 
 if __name__ == "__main__":
