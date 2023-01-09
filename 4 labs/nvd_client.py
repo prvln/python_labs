@@ -24,6 +24,8 @@ class cve_from_request:
 @dataclass
 class cve_data:
     data: List[cve_from_request]=field(default_factory=list)
+     
+BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/1.0?cpeMatchString=cpe:2.3"
 
 def data_into_csv(data:cve_data):
         with open('MetaInfo.csv', 'w', newline='') as f:
@@ -34,13 +36,13 @@ def data_into_csv(data:cve_data):
                 writer.writerow({'_id': payload._id, 'cve_meta_info': payload.cve_meta_info})
 
 def get_cve_info(args:argparse.Namespace=None):
-    base_url = "https://services.nvd.nist.gov/rest/json/cves/1.0?cpeMatchString=cpe:2.3"
+   
 
     if args.type not in ["a","h","o"]:
         message = f"wrong --type argument {args.type}"
         raise ValueError(message)
 
-    url = f"{base_url}:{args.type}:{args.vendor}:{args.product}:{args.version}"
+    url = f"{BASE_URL}:{args.type}:{args.vendor}:{args.product}:{args.version}"
     
     asyncio.get_event_loop().run_until_complete(searching(url))
 
@@ -105,8 +107,7 @@ def handle(text, payload_data:cve_data):
                     _id = cve["cve"]["CVE_data_meta"]["ID"]
                     cve_meta_info = cve["impact"]["baseMetricV3"]["cvssV3"]["vectorString"]
                     payload_data.data.append(cve_from_request(_id, cve_meta_info))
-
-                except Exception as error :
+                except Exception as error:
                     logging.error("error")
         finally:
             logging.info("added")
