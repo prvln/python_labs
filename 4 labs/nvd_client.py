@@ -109,7 +109,8 @@ def handle(text, payload_data:cve_data):
                     payload_data.data.append(cve_from_request(_id, cve_meta_info))
                 except Exception as error:
                     logging.error("error")
-        finally:
+                    payload_data.data.append(cve_from_request(_id, None))
+        else:
             logging.info("added")
 
 def totalResults(text):
