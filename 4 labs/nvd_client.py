@@ -24,6 +24,8 @@ class cve_from_request:
 @dataclass
 class cve_data:
     data: List[cve_from_request]=field(default_factory=list)
+     
+BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/1.0?cpeMatchString=cpe:2.3"
 
 def data_into_csv(data:cve_data):
         with open('MetaInfo.csv', 'w', newline='') as f:
@@ -34,13 +36,13 @@ def data_into_csv(data:cve_data):
                 writer.writerow({'_id': payload._id, 'cve_meta_info': payload.cve_meta_info})
 
 def get_cve_info(args:argparse.Namespace=None):
-    base_url = "https://services.nvd.nist.gov/rest/json/cves/1.0?cpeMatchString=cpe:2.3"
+   
 
     if args.type not in ["a","h","o"]:
         message = f"wrong --type argument {args.type}"
         raise ValueError(message)
 
-    url = f"{base_url}:{args.type}:{args.vendor}:{args.product}:{args.version}"
+    url = f"{BASE_URL}:{args.type}:{args.vendor}:{args.product}:{args.version}"
     
     asyncio.get_event_loop().run_until_complete(searching(url))
 
@@ -77,12 +79,18 @@ async def searching(url:str, elements:int=100, batch_page:int=3):
     tasks = []
     count = 0
     logging.debug(f"{pages},{batch_page},{total},{elements}")
+    tail = pages % batch_page
 
     for i in range(0,int(pages / batch_page)):
         for j in range(0,batch_page):
             logging.info(f"requesting page #{count+1}")
             tasks.append(request(url,count*elements))
             count+=1
+    
+    for i in range(batch_page,batch_page+tail):
+        logging.info(f"requesting page #{count+1}")
+        tasks.append(request(url,count*elements))
+        count +=1
 
     res = await asyncio.gather(*tasks)
 
@@ -105,10 +113,12 @@ def handle(text, payload_data:cve_data):
                     _id = cve["cve"]["CVE_data_meta"]["ID"]
                     cve_meta_info = cve["impact"]["baseMetricV3"]["cvssV3"]["vectorString"]
                     payload_data.data.append(cve_from_request(_id, cve_meta_info))
-
-                except Exception as error :
+                except Exception as error:
                     logging.error("error")
-        finally:
+                    payload_data.data.append(cve_from_request(_id, None))
+        except Exception as error:
+            logging.error(error)
+        else:
             logging.info("added")
 
 def totalResults(text):
@@ -133,4 +143,3 @@ if __name__ == "__main__":
     print(args.type)
 
     get_cve_info(args)
-
